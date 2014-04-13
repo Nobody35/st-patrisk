@@ -1,5 +1,4 @@
 package risk
-package risk
 
 import java.util.List
 import com.sun.org.apache.xpath.internal.operations.Minus
@@ -16,8 +15,21 @@ trait FixMap {
   val numberOfContry : Int
 }
 
+abstract class Question [A,B] {
+	def print(conditions : A) 
+	def consequence (consequences : B)  
+	def cancel()
+}
 
-trait InterFace {
+
+
+
+ 
+abstract class MultipleQuestions
+
+
+trait ThePublisher {
+  def ask[A,B] (q: Question[A,B]) ()
   def askBattle () : (Int,Int) 
   def askDoBattle () : Boolean
   def askDoFight () : Boolean
@@ -37,7 +49,7 @@ trait InterFace {
 }
 
 
-class Game (nPlayer: Int, fixMap : FixMap , interFace : InterFace) {
+class Game (nPlayer: Int, fixMap : FixMap , ThePublisher : ThePublisher) {
   val countryOwners  = new Array[Int] (fixMap.numberOfContry)
   val countryArmy = new Array[Int] (fixMap.numberOfContry)
   val rand = new scala.util.Random(142); /*todo changer*/
@@ -59,26 +71,26 @@ class Game (nPlayer: Int, fixMap : FixMap , interFace : InterFace) {
   /*seul à avoir acces à country army*/
   def addArmy(country: Int, n : Int ) ={ 
 	countryArmy(country) += n
-	interFace.printAddArmy(country, n)
+	ThePublisher.printAddArmy(country, n)
   }
   /*seul à avoir acces à country owner*/
   def changeOwner(country: Int, playerWin : Int) {
     countryOwners(country) = playerWin
-    interFace.printChangeOwner(country, playerWin)
-    /*todo change les compteurs*/
+    ThePublisher.printChangeOwner(country, playerWin)
+    /*todo change les compteurs pour la win*/
   }
   /*don't check they are neigbors*/
   def moveArmy (countryFrom : Int, countryTo : Int , n : Int) { 
       addArmy(countryFrom,-n);
       addArmy(countryTo,n);
-      interFace.printMoveArmy(countryFrom, countryTo, n)
+      ThePublisher.printMoveArmy(countryFrom, countryTo, n)
   }
   def Roll () : Int = {
    	val n = rand.nextInt(6) +1
    	println("Roll " + n )
    	n
   }
-    
+    z -( (-))
   /*begining*/
   def begining() = {} /*todo : place country*/
   
@@ -93,7 +105,7 @@ class Game (nPlayer: Int, fixMap : FixMap , interFace : InterFace) {
   def reinforcement (player : Int) {
     var n = computeReinforcement (player)
     while (n > 0) {
-      val (country,k) = interFace.askReinforcement(n)
+      val (country,k) = ThePublisher.askReinforcement(n)
       addArmy(country, k)
       n -= k 
     }
@@ -103,18 +115,18 @@ class Game (nPlayer: Int, fixMap : FixMap , interFace : InterFace) {
   
   
   def war (player : Int) = {
-    while (interFace.askDoBattle()) {
-    	val (c1,c2) = interFace.askBattle()
+    while (ThePublisher.askDoBattle()) {
+    	val (c1,c2) = ThePublisher.askBattle()
     	battle (c1,c2)  
      }
    }
   def battle (ca :Int, cd: Int) {
     var fightContinue = true
-    interFace.printBattle(ca, cd)
-    while (fightContinue && interFace.askDoFight()) {
+    ThePublisher.printBattle(ca, cd)
+    while (fightContinue && ThePublisher.askDoFight()) {
     	val ma = countryArmy(ca);
     	if (ma >1) {
-    		val na = interFace.askFight(scala.math.min(ma-1,3),1)
+    		val na = ThePublisher.askFight(scala.math.min(ma-1,3),1)
     		val nd = if (countryArmy(cd) == 1) 1 else 2; 
     		val (la,ld) = fight (na,nd)
     		addArmy(ca,-la);
@@ -122,13 +134,13 @@ class Game (nPlayer: Int, fixMap : FixMap , interFace : InterFace) {
     		if (countryArmy(cd) == 0) {
     		fightContinue= false;
     	  	changeOwner(cd, countryOwners(ca))
-    	  	interFace.printWinBattle()
-    	  	interFace.askHowMuchMove(ma-1,na)
-      	  	moveArmy(ca, cd, interFace.askHowMuchMove(ma-1,na))
+    	  	ThePublisher.printWinBattle()
+    	  	ThePublisher.askHowMuchMove(ma-1,na)
+      	  	moveArmy(ca, cd, ThePublisher.askHowMuchMove(ma-1,na))
     		};
     	}
     	else {fightContinue= false; 
-    	interFace.printLoseBattle()
+    	ThePublisher.printLoseBattle()
     	}
     }
    };
@@ -159,15 +171,15 @@ class Game (nPlayer: Int, fixMap : FixMap , interFace : InterFace) {
 	    la += 1
 	  }
 	 }
-	 interFace.printFight(va, vd, la, ld)
+	 ThePublisher.printFight(va, vd, la, ld)
 	 (la,ld)	 
   }
   
   def moving (player : Int) {
-   if (interFace.askDoMove()) {
-	val (c1,c2) = interFace.askWhereMove()
+   if (ThePublisher.askDoMove()) {
+	val (c1,c2) = ThePublisher.askWhereMove()
 	if (fixMap.neighbors(c1, c2) && countryOwners(c1) == player && countryOwners(c2) == player) {
-	 moveArmy(c1, c2, interFace.askHowMuchMove((countryArmy(c1)-1),0))
+	 moveArmy(c1, c2, ThePublisher.askHowMuchMove((countryArmy(c1)-1),0))
 	}
 	/*todo else*/	  
    }
